@@ -1,0 +1,40 @@
+FROM ${REPOSITORY}/aur-pkgbuild-base:${ARCH_VERSION}
+
+ENV ARCH_VERSION ${ARCH_VERSION}
+
+ENV VERSION ${VERSION}
+
+ENV REFRESHED_AT ${DATE}
+
+# Ensure elinks(1) is installed
+RUN [ "/usr/bin/pacman", "--noconfirm", "--sync", "--quiet", "elinks" ]
+
+# Download irssi source
+ADD --chown=_build:_build https://github.com/irssi/irssi/releases/download/${VERSION}/irssi-${VERSION}.tar.xz /opt/
+
+# Create & chown irssi source directory
+RUN [ "/usr/sbin/mkdir", "/opt/irssi-${VERSION}" ]
+RUN [ "/usr/sbin/chown", "_build:_build", "/opt/irssi-${VERSION}" ]
+
+USER _build
+
+# Configure & build irssi
+WORKDIR /opt
+RUN [ "/usr/bin/tar", "xf", "/opt/irssi-${VERSION}.tar.xz" ]
+WORKDIR /opt/irssi-${VERSION}
+RUN [ "/opt/irssi-${VERSION}/configure", "--prefix=/usr", "--sysconfdir=/etc", "--with-proxy", "--with-perl-lib=vendor" ]
+RUN [ "/usr/bin/make" ]
+
+# Populate irssi-icb sources
+COPY --chown=_build:_build irssi-icb/ /opt/irssi-icb/
+
+# Configure & build irssi-icb
+WORKDIR /opt/irssi-icb
+RUN [ "/opt/irssi-icb/autorun.sh" ]
+RUN [ "/usr/sbin/mkdir", "/opt/irssi-icb/build" ]
+WORKDIR /opt/irssi-icb/build
+RUN [ "/opt/irssi-icb/configure", "--prefix=/opt/output", "--with-irssi=/opt/irssi-${VERSION}" ]
+RUN [ "/usr/bin/make" ]
+
+# Install the plugin
+CMD [ "/usr/bin/make", "install" ]
