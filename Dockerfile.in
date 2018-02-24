@@ -34,9 +34,9 @@ RUN [ "/usr/sbin/mkdir", "/opt/irssi-${VERSION}" ]
 RUN [ "/usr/sbin/chown", "_build:_build", "/opt/irssi-${VERSION}" ]
 
 USER _build
+WORKDIR /opt
 
 # Configure & build irssi
-WORKDIR /opt
 RUN [ "/usr/bin/tar", "xf", "/opt/irssi-${VERSION}.tar.xz" ]
 WORKDIR /opt/irssi-${VERSION}
 RUN [ "/opt/irssi-${VERSION}/configure", "--prefix=/usr", "--sysconfdir=/etc", "--with-proxy", "--with-perl-lib=vendor" ]
