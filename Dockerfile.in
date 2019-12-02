@@ -16,6 +16,8 @@ FROM ${REPOSITORY}/aur-pkgbuild-base:${ARCH_VERSION}
 
 ENV ARCH_VERSION ${ARCH_VERSION}
 
+ENV IRSSI_SIGNING_KEY ${IRSSI_SIGNING_KEY}
+
 ENV VERSION ${VERSION}
 
 ENV REFRESHED_AT ${DATE}
@@ -26,8 +28,9 @@ RUN [ "/usr/bin/pacman", "--noconfirm", "--sync", "--quiet", "elinks" ]
 # Populate irssi-icb sources
 COPY --chown=_build:_build irssi-icb/ /opt/irssi-icb/
 
-# Download irssi source
+# Download irssi source & GPG signature
 ADD --chown=_build:_build https://github.com/irssi/irssi/releases/download/${VERSION}/irssi-${VERSION}.tar.xz /opt/
+ADD --chown=_build:_build https://github.com/irssi/irssi/releases/download/${VERSION}/irssi-${VERSION}.tar.xz.asc /opt/
 
 # Create & chown irssi source directory
 RUN [ "/usr/sbin/mkdir", "/opt/irssi-${VERSION}" ]
@@ -35,6 +38,13 @@ RUN [ "/usr/sbin/chown", "_build:_build", "/opt/irssi-${VERSION}" ]
 
 USER _build
 WORKDIR /opt
+
+# Extract the official irssi signing key & show its fingerprint
+RUN [ "/usr/sbin/gpg", "--homedir=/opt/irssi-${VERSION}/.gnupg", "--recv-keys", "${IRSSI_SIGNING_KEY}" ]
+RUN [ "/usr/sbin/gpg", "--homedir=/opt/irssi-${VERSION}/.gnupg", "--fingerprint", "staff@irssi.org" ]
+
+# Verify the release distribution
+RUN [ "/usr/sbin/gpg", "--homedir=/opt/irssi-${VERSION}/.gnupg", "--verify", "/opt/irssi-${VERSION}.tar.xz.asc" ]
 
 # Configure & build irssi
 RUN [ "/usr/bin/tar", "xf", "/opt/irssi-${VERSION}.tar.xz" ]

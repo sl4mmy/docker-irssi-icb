@@ -22,11 +22,13 @@ DOCKER_FLAGS ?= --memory=4GB --rm=true
 DOCKER_MOUNTS ?= --mount type=bind,source=$(PWD)/pkg,destination=/opt/output
 DOCKER_REPOSITORY ?= sl4mmy
 
+IRSSI_SIGNING_KEY = 7EE6 5E30 82A5 FB06 AC7C 368D 00CC B587 DDBE F0E1
+
 all: Dockerfile pkg/
 	docker build --rm=true --tag="$(DOCKER_REPOSITORY)/$(NAME):$(VERSION)" $(DOCKER_FLAGS) .
 
 Dockerfile: Dockerfile.in Makefile
-	sed "s/\$${ARCH_VERSION}/$(ARCH_VERSION)/; s/\$${VERSION}/$(VERSION)/; s/\$${REPOSITORY}/$(DOCKER_REPOSITORY)/; s/\$${DATE}/$(DATE)/" $(<) >$(@)
+	sed "s/\$${ARCH_VERSION}/$(ARCH_VERSION)/; s/\$${VERSION}/$(VERSION)/g; s/\$${REPOSITORY}/$(DOCKER_REPOSITORY)/; s/\$${DATE}/$(DATE)/; s/\$${IRSSI_SIGNING_KEY}/$(IRSSI_SIGNING_KEY)/" $(<) >$(@)
 
 pkg/:
 	mkdir pkg
@@ -39,7 +41,7 @@ run:
 
 update: Dockerfile.in
 	git subtree pull --prefix $(NAME) https://github.com/mglocker/irssi-icb.git master --squash
-	sed "s/\$${ARCH_VERSION}/$(ARCH_VERSION)/; s/\$${VERSION}/$(VERSION)/; s/\$${REPOSITORY}/$(DOCKER_REPOSITORY)/; s/\$${DATE}/$(DATE)/" $(<) >Dockerfile
+	sed "s/\$${ARCH_VERSION}/$(ARCH_VERSION)/; s/\$${VERSION}/$(VERSION)/g; s/\$${REPOSITORY}/$(DOCKER_REPOSITORY)/; s/\$${DATE}/$(DATE)/; s/\$${IRSSI_SIGNING_KEY}/$(IRSSI_SIGNING_KEY)/" $(<) >Dockerfile
 	$(MAKE)
 
 clean:
